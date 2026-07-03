@@ -46,6 +46,35 @@ export function RadioDashboard() {
         }
     }, [volume]);
 
+    // Audio error handler - attempts stream recovery
+    useEffect(() => {
+        const audio = audioRef.current;
+        if (!audio) return;
+
+        const handleError = () => {
+            console.warn('Audio stream error, attempting recovery...');
+            setIsPlaying(false);
+        };
+
+        const handleStalled = () => {
+            console.warn('Audio stream stalled...');
+            // Try to resume after a short delay
+            setTimeout(() => {
+                if (audioRef.current && selectedStation) {
+                    audioRef.current.play().catch(() => { });
+                }
+            }, 1000);
+        };
+
+        audio.addEventListener('error', handleError);
+        audio.addEventListener('stalled', handleStalled);
+
+        return () => {
+            audio.removeEventListener('error', handleError);
+            audio.removeEventListener('stalled', handleStalled);
+        };
+    }, [selectedStation]);
+
     const loadStations = useCallback(async (query = '', tag = '', append = false) => {
         if (append) setLoadingMore(true);
         else setLoading(true);
@@ -118,14 +147,42 @@ export function RadioDashboard() {
         if (audioRef.current) {
             initAudio(audioRef.current);
             if (station.url_resolved) {
-                audioRef.current.src = station.url_resolved;
+                // Convert http:// to https:// when possible to avoid mixed-content issues
+                let streamUrl = station.url_resolved;
+                try {
+                    const url = new URL(streamUrl);
+                    if (url.protocol === 'http:') {
+                        // Try HTTPS version first (many streams support both)
+                        streamUrl = streamUrl.replace('http://', 'https://');
+                    }
+                } catch (e) {
+                    // URL parsing failed, use original
+                }
+
+                audioRef.current.src = streamUrl;
                 audioRef.current.volume = volume;
-                audioRef.current.play()
-                    .then(() => setIsPlaying(true))
-                    .catch(() => {
-                        console.warn("Autoplay blocked by sector policy");
-                        setIsPlaying(false);
-                    });
+                audioRef.current.load();
+                const playPromise = audioRef.current.play();
+                if (playPromise !== undefined) {
+                    playPromise
+                        .then(() => setIsPlaying(true))
+                        .catch(() => {
+                            // Retry with original URL if HTTPS failed
+                            if (streamUrl !== station.url_resolved) {
+                                audioRef.current.src = station.url_resolved;
+                                audioRef.current.load();
+                                audioRef.current.play()
+                                    .then(() => setIsPlaying(true))
+                                    .catch(() => {
+                                        console.warn("Autoplay blocked - user interaction required");
+                                        setIsPlaying(false);
+                                    });
+                            } else {
+                                console.warn("Autoplay blocked by sector policy");
+                                setIsPlaying(false);
+                            }
+                        });
+                }
             }
         }
     };
@@ -481,7 +538,7 @@ export function RadioDashboard() {
                 </div>
             </footer>
 
-            <audio ref={audioRef} crossOrigin="anonymous" />
+            <audio ref={audioRef} preload="none" playsinline />
         </div>
     );
 }

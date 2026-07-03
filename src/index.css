@@ -66,6 +66,21 @@
     overflow-x: hidden;
     font-family: var(--font-body);
     line-height: 1.5;
+    /* Prevent pull-to-refresh on Android */
+    overscroll-behavior: none;
+    /* Safe area support for notched phones */
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+  }
+
+  /* Improve touch targets on mobile */
+  @media (pointer: coarse) {
+    button, a, [role="button"] {
+      min-height: 44px;
+      min-width: 44px;
+    }
   }
 
   h1 {
@@ -268,4 +283,62 @@
 
 .cyber-slider::-moz-range-thumb:hover {
   transform: scale(1.2);
+}
+
+/* Mobile-specific optimizations */
+@media (max-width: 640px) {
+  /* Reduce footer padding on small screens */
+  footer {
+    padding: 0.5rem !important;
+  }
+
+  /* Compact player controls on mobile */
+  footer .glass-panel-deep {
+    padding: 0.75rem !important;
+    border-radius: 1rem !important;
+  }
+
+  /* Smaller album art placeholder on mobile */
+  footer .group\/play > div:first-child {
+    width: 3.5rem !important;
+    height: 3.5rem !important;
+  }
+
+  /* Reduce grid gaps on mobile */
+  main .grid {
+    gap: 0.75rem;
+  }
+
+  /* Smaller station cards on mobile */
+  main .grid > div {
+    padding: 0.75rem;
+  }
+
+  /* Hide spectrum visualizer on very small screens */
+  @media (max-width: 480px) {
+    footer .glass-panel-deep:last-of-type {
+      display: none;
+    }
+  }
+}
+
+/* Capacitor/Android specific fixes */
+@supports (-webkit-touch-callout: none) {
+  body {
+    /* Prevent iOS text selection on interactive elements */
+    -webkit-user-select: none;
+    user-select: none;
+  }
+
+  /* Allow text selection in inputs */
+  input, textarea {
+    -webkit-user-select: text;
+    user-select: text;
+  }
+}
+
+/* Prevent text selection on drag (Android WebView) */
+* {
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
 }

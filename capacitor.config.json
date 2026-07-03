@@ -1,0 +1,32 @@
+{
+  "appId": "com.angkon.thunderstormradio",
+  "appName": "Thunderstorm Radio",
+  "webDir": "dist",
+  "server": {
+    "cleartext": true,
+    "androidScheme": "https"
+  },
+  "android": {
+    "allowMixedContent": true,
+    "captureInput": true,
+    "webContentsDebuggingEnabled": false
+  },
+  "plugins": {
+    "SplashScreen": {
+      "launchShowDuration": 3000,
+      "launchAutoHide": true,
+      "backgroundColor": "#050508",
+      "androidSplashResourceName": "splash",
+      "androidScaleType": "CENTER_CROP",
+      "showSpinner": false
+    },
+    "StatusBar": {
+      "style": "DARK",
+      "backgroundColor": "#050508",
+      "overlaysWebView": true
+    },
+    "App": {
+      "exitUrl": "/exit"
+    }
+  }
+}
